@@ -7,7 +7,7 @@ using namespace cv;
 int main()
 {
 	PersonTracking person;
-   person.KillDCM();
+ //  person.KillDCM();
 	person.Init();
 	for (; waitKey(15) != 27; )
 	{
