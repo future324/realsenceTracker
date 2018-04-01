@@ -7,17 +7,22 @@ using namespace cv;
 int main()
 {
 	PersonTracking person;
- //  person.KillDCM();
+   person.KillDCM();
 	person.Init();
-	for (; waitKey(15) != 27; )
+	for (; waitKey(1) != 27; )
 	{
-		
-		if (!person.Update()) continue;
-		Mat show = person.draw(person.Queryperson());
-	    cout << person.QueryMassCenterWorld(person.Queryperson()).x << "  " 
-			<< person.QueryMassCenterWorld(person.Queryperson()).y << "   "
-			<<person.QueryMassCenterWorld(person.Queryperson()).z<<endl;
+		Mat show = person.QueryColorImage();
+		if (person.Update())
+		{
+			auto Tperson = person.Queryperson();
+			//cout << person.QueryBoundingBox(Tperson) << endl;
+			show = person.draw(Tperson);
+			cout << person.QueryMassCenterWorld(Tperson).x << "  "
+			<< person.QueryMassCenterWorld(Tperson).y << "   "
+			<<person.QueryMassCenterWorld(Tperson).z<<endl;
+		}
 		devView(show);
+		person.release();
 	}
 	return 0;
 }

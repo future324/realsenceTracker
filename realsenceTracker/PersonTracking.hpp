@@ -13,23 +13,24 @@ class PersonTracking
 public:
 	bool Init() {
 		sr300_manager = PXCSenseManager::CreateInstance();
-		sr300_manager->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 960, 540, 60);
+		sr300_manager->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 360, 30);
 		sr300_manager->EnablePersonTracking();
 		trackingModule = sr300_manager->QueryPersonTracking();
 		PXCPersonTrackingConfiguration *pertrackingConfig = trackingModule->QueryConfiguration();
 		pertrackingConfig->SetTrackedAngles(PXCPersonTrackingConfiguration::TRACKING_ANGLES_ALL);
-		//persondata = trackingModule->QueryOutput();
 		sr300_manager->Init(); 
 		Update();
 		return true;
 	}
-	int Update() {
+	void release() {
 		// ÇåÁã
 		sr300_manager->ReleaseFrame();
+	}
+	int Update() {
+
 		// ¸üÐÂ
 		if (sr300_manager->AcquireFrame(true) < PXC_STATUS_NO_ERROR) return -1;
 		sample = sr300_manager->QuerySample();
-		color = sample->color;
 		persondata = trackingModule->QueryOutput();
 		npersons = persondata->QueryNumberOfPeople();
 		for (size_t i = 0; i < npersons; i++) {
@@ -74,12 +75,13 @@ public:
 		//	cv::normalize(img,img,0,255)
 		pxcimg->ReleaseAccess(&img_dat);
 		//flip(img*1.5, img, 1);
-		pyrDown(img, img);
+		//pyrDown(img, img);
 		return img;
 	}
 
 	cv::Point3f QueryMassCenterWorld(PXCPersonTrackingData::PersonTracking *person) {
-		if (person == NULL)return cv::Point3f(0,0,0);
+		if (person == NULL)
+			return cv::Point3f(0,0,0);
 		auto worldPos = person->QueryCenterMass().world.point;
 		return cv::Point3f(worldPos.x, worldPos.y, worldPos.z);
 	}
@@ -88,25 +90,25 @@ public:
 		return persondata->QueryPersonData(PXCPersonTrackingData::AccessOrderType::ACCESS_ORDER_BY_ID,0)->QueryTracking();
 		// person[PXCPersonTrackingData::AccessOrderType::ACCESS_ORDER_BY_ID];
 	}
-	cv::Rect QueryHandBoundingBox(PXCPersonTrackingData::PersonTracking *person)
+	cv::Rect QueryBoundingBox(PXCPersonTrackingData::PersonTracking *person)
 	{
-		auto rect = person->Query2DBoundingBox().rect;
 		if (person!=NULL)
 		{
+
+			auto rect = person->Query2DBoundingBox().rect;
 			return cv::Rect(rect.x, rect.y, rect.w, rect.h);
 		}
-		
 	}
 	cv::Mat draw(PXCPersonTrackingData::PersonTracking *person)
 	{
-
+		cv::Mat output;
 		if (person!=NULL)
 		{
-			auto box = QueryHandBoundingBox(person);
-			rectangle(QueryColorImage(), box, cv::Scalar(0, 255, 255),1);
+			output = QueryColorImage();
+			auto box = QueryBoundingBox(person);
+			rectangle(output, box, cv::Scalar(0, 255, 255),2);
 		}
-		
-		return QueryColorImage();
+		return output;
 	}
 private:
 	PXCSenseManager* sr300_manager = NULL;
